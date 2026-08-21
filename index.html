@@ -1,311 +1,523 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Evaluación Access</title>
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#1e40af">
-    <style>
-        :root { 
-            --bg: #f8fafc; 
-            --card: #ffffff; 
-            --accent: #1e40af; 
-            --text: #0f172a; 
-        }
-        body { 
-            font-family: 'Segoe UI', system-ui, sans-serif; 
-            background: var(--bg); 
-            color: var(--text); 
-            padding: 15px; 
-            margin: 0; 
-        }
-        .container { 
-            max-width: 500px; 
-            margin: auto; 
-        }
-        .card { 
-            background: var(--card); 
-            padding: 25px; 
-            border-radius: 16px; 
-            box-shadow: 0 10px 25px rgba(0,0,0,0.05); 
-            border: 1px solid #e2e8f0; 
-        }
-        h2 { 
-            font-size: 1.4rem; 
-            color: var(--accent); 
-            margin-top: 0; 
-            border-bottom: 2px solid #e2e8f0; 
-            padding-bottom: 10px; 
-            text-align: center; 
-        }
-        label { 
-            display: block; 
-            margin-top: 15px; 
-            font-weight: 700; 
-            font-size: 0.9rem; 
-            color: #475569; 
-        }
-        input, select, textarea { 
-            width: 100%; 
-            padding: 12px; 
-            margin-top: 5px; 
-            border: 1px solid #cbd5e1; 
-            border-radius: 8px; 
-            box-sizing: border-box; 
-            font-size: 16px; 
-        }
-        .tecnico-section {
-            margin-top: 10px;
-        }
-        .tecnico-row { 
-            background: #f1f5f9; 
-            padding: 12px; 
-            border-radius: 10px; 
-            margin-top: 10px; 
-            border: 1px solid #e2e8f0; 
-        }
-        .tecnico-titulo {
-            font-size: 0.85rem;
-            font-weight: bold;
-            color: #1e40af;
-            margin-bottom: 5px;
-            display: block;
-        }
-        .btn-add { 
-            background: #e2e8f0; 
-            color: #1e40af; 
-            border: none; 
-            padding: 10px; 
-            border-radius: 6px; 
-            font-weight: bold; 
-            width: 100%; 
-            cursor: pointer; 
-            margin-top: 10px; 
-        }
-        .eval-container { 
-            display: flex; 
-            justify-content: space-between; 
-            gap: 4px; 
-            margin-top: 8px; 
-        }
-        .eval-btn { 
-            flex: 1; 
-            padding: 12px 0; 
-            border: 1px solid #cbd5e1; 
-            border-radius: 6px; 
-            background: white; 
-            cursor: pointer; 
-            font-weight: bold; 
-            text-align: center; 
-            transition: 0.2s; 
-        }
-        .eval-btn.selected { 
-            background: var(--accent); 
-            color: white; 
-            border-color: var(--accent); 
-        }
-        .btn-submit { 
-            background: var(--accent); 
-            color: white; 
-            border: none; 
-            padding: 18px; 
-            border-radius: 10px; 
-            width: 100%; 
-            font-size: 1rem; 
-            font-weight: bold; 
-            margin-top: 30px; 
-            cursor: pointer; 
-        }
-        .btn-submit:disabled { 
-            background: #94a3b8; 
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Evaluación Access</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0b2545">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#eef1f6;
+    --card:#ffffff;
+    --navy-900:#0b2545;
+    --navy-700:#14396b;
+    --amber:#f5a623;
+    --danger:#dc2626;
+    --warn:#f59e0b;
+    --good:#16a34a;
+    --text:#101828;
+    --muted:#64748b;
+    --border:#dbe1ea;
+  }
+  *{box-sizing:border-box;}
+  body{
+    font-family:'Inter',system-ui,sans-serif;
+    background:
+      radial-gradient(1200px 400px at 50% -120px, rgba(11,37,69,0.06), transparent),
+      var(--bg);
+    color:var(--text);
+    margin:0;
+    padding:0 0 110px 0;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .topbar{
+    position:sticky; top:0; z-index:20;
+    background:var(--navy-900);
+    padding:14px 18px 16px;
+    color:#fff;
+  }
+  .topbar-row{
+    display:flex; align-items:center; gap:10px;
+    max-width:520px; margin:0 auto;
+  }
+  .topbar-icon{
+    width:34px; height:34px; border-radius:9px;
+    background:var(--amber);
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Space Grotesk',sans-serif; font-weight:700; color:var(--navy-900);
+    font-size:1rem; flex-shrink:0;
+  }
+  .topbar-title{
+    font-family:'Space Grotesk',sans-serif;
+    font-weight:600; font-size:1.05rem; line-height:1.15;
+  }
+  .topbar-sub{
+    font-size:0.72rem; color:#b9c6dc; margin-top:1px; letter-spacing:.02em;
+  }
+  .progress-track{
+    max-width:520px; margin:12px auto 0; height:5px;
+    background:rgba(255,255,255,0.15); border-radius:3px; overflow:hidden;
+  }
+  .progress-fill{
+    height:100%; width:0%;
+    background:linear-gradient(90deg,var(--amber),#ffd27a);
+    border-radius:3px; transition:width .35s ease;
+  }
+
+  .container{max-width:500px; margin:18px auto; padding:0 15px;}
+  .card{
+    background:var(--card);
+    padding:22px 20px 26px;
+    border-radius:16px;
+    box-shadow:0 10px 30px rgba(11,37,69,0.07);
+    border:1px solid var(--border);
+  }
+  .section-title{
+    font-family:'Space Grotesk',sans-serif;
+    font-size:0.78rem; font-weight:600; letter-spacing:.06em;
+    text-transform:uppercase; color:var(--navy-700);
+    display:flex; align-items:center; gap:8px;
+    margin:26px 0 4px;
+  }
+  .section-title:first-of-type{margin-top:2px;}
+  .section-title::after{
+    content:""; flex:1; height:1px; background:var(--border);
+  }
+
+  label{
+    display:block; margin-top:14px; font-weight:600;
+    font-size:0.85rem; color:#334155;
+  }
+  label .req{color:var(--danger); margin-left:2px;}
+  input, select, textarea{
+    width:100%; padding:12px 13px; margin-top:6px;
+    border:1px solid var(--border); border-radius:10px;
+    box-sizing:border-box; font-size:16px; font-family:inherit;
+    color:var(--text); background:#fbfcfe;
+    transition:border-color .15s, box-shadow .15s;
+  }
+  input:focus, select:focus, textarea:focus{
+    outline:none; border-color:var(--navy-700);
+    box-shadow:0 0 0 3px rgba(20,57,107,0.12);
+    background:#fff;
+  }
+  input#fecha, input.t-rut{
+    font-family:'JetBrains Mono',monospace; font-size:0.95rem;
+  }
+  textarea{resize:vertical; min-height:70px;}
+
+  .tecnico-row{
+    background:#f4f6fa; padding:14px; border-radius:12px;
+    margin-top:10px; border:1px solid var(--border); position:relative;
+  }
+  .tecnico-head{
+    display:flex; align-items:center; justify-content:space-between;
+  }
+  .tecnico-titulo{
+    font-size:0.78rem; font-weight:700; color:var(--navy-700);
+    letter-spacing:.02em;
+  }
+  .btn-remove{
+    background:none; border:none; color:var(--danger);
+    font-size:0.75rem; font-weight:700; cursor:pointer;
+    padding:2px 4px;
+  }
+  .btn-add{
+    background:#fff; color:var(--navy-700);
+    border:1.5px dashed #a9b8cf; padding:12px;
+    border-radius:10px; font-weight:700; font-size:0.85rem;
+    width:100%; cursor:pointer; margin-top:12px;
+    display:flex; align-items:center; justify-content:center; gap:6px;
+  }
+  .btn-add:active{background:#eef2f8;}
+
+  .otro-proveedor{display:none; margin-top:8px;}
+  .otro-proveedor.show{display:block;}
+
+  /* Selector de evaluación estilo "gauge" */
+  .pregunta-block{margin-top:20px;}
+  .pregunta-texto{
+    font-weight:600; font-size:0.85rem; color:#334155;
+    display:flex; justify-content:space-between; align-items:baseline;
+  }
+  .pregunta-nota{
+    font-family:'JetBrains Mono',monospace; font-size:0.8rem;
+    color:var(--muted); font-weight:600;
+  }
+  .eval-container{
+    display:flex; gap:4px; margin-top:8px;
+  }
+  .eval-btn{
+    flex:1; padding:12px 0; border:none; border-radius:7px;
+    cursor:pointer; font-weight:700; text-align:center;
+    font-family:'JetBrains Mono',monospace; font-size:0.95rem;
+    background:#eef1f6; color:#94a3b8;
+    transition:transform .12s ease, background .15s, color .15s;
+  }
+  .eval-btn:active{transform:scale(0.94);}
+  .eval-btn.selected{color:#fff; transform:scale(1.06);}
+  .eval-scale{
+    display:flex; justify-content:space-between;
+    font-size:0.66rem; color:var(--muted); margin-top:5px; padding:0 2px;
+  }
+
+  .btn-submit-wrap{
+    position:fixed; left:0; right:0; bottom:0; z-index:30;
+    background:linear-gradient(180deg, rgba(238,241,246,0) , var(--bg) 30%);
+    padding:14px 15px 18px;
+  }
+  .btn-submit{
+    max-width:470px; margin:0 auto; display:block;
+    background:var(--navy-900); color:#fff; border:none;
+    padding:16px; border-radius:12px; width:100%;
+    font-size:1rem; font-weight:700; cursor:pointer;
+    box-shadow:0 8px 22px rgba(11,37,69,0.3);
+    font-family:'Space Grotesk',sans-serif; letter-spacing:.02em;
+  }
+  .btn-submit:disabled{background:#94a3b8; box-shadow:none;}
+
+  /* Overlay de éxito */
+  .overlay{
+    position:fixed; inset:0; background:rgba(11,37,69,0.94);
+    display:none; align-items:center; justify-content:center;
+    flex-direction:column; z-index:50; color:#fff; text-align:center; padding:30px;
+  }
+  .overlay.show{display:flex;}
+  .check-circle{
+    width:74px; height:74px; border-radius:50%;
+    background:var(--good); display:flex; align-items:center; justify-content:center;
+    margin-bottom:18px; animation:pop .35s ease;
+  }
+  @keyframes pop{from{transform:scale(0.6); opacity:0;} to{transform:scale(1); opacity:1;}}
+  .overlay h3{font-family:'Space Grotesk',sans-serif; margin:0 0 6px; font-size:1.2rem;}
+  .overlay p{color:#c7d2e3; font-size:0.9rem; margin:0 0 22px;}
+  .overlay button{
+    background:var(--amber); color:var(--navy-900); border:none;
+    padding:13px 22px; border-radius:10px; font-weight:700; cursor:pointer;
+    font-family:'Space Grotesk',sans-serif;
+  }
+
+  .error-text{
+    color:var(--danger); font-size:0.78rem; margin-top:6px; display:none; font-weight:600;
+  }
+  .error-text.show{display:block;}
+</style>
 </head>
 <body>
- 
-<div class="container">
-    <div class="card">
-        <h2>Evaluación Access</h2>
-        <form id="mainForm">
-            <label>Fecha</label>
-            <input type="date" id="fecha" required>
- 
-            <label>Proveedor</label>
-            <select id="proveedor" required>
-                <option value="">Seleccione...</option>
-                <option value="ALEJANDRO LABRA">ALEJANDRO LABRA</option>
-                <option value="ARIRIMAQ">ARIRIMAQ</option>
-                <option value="BASH">BASH</option>
-                <option value="BOMBEROS">BOMBEROS</option>
-                <option value="BOSQUE ALTO JARDINES">BOSQUE ALTO JARDINES</option>
-                <option value="CASTILLO Y CARRANZA">CASTILLO Y CARRANZA</option>
-                <option value="CHILEMPACK">CHILEMPACK</option>
-                <option value="CIVIL WORKS">CIVIL WORKS</option>
-                <option value="CJ SISTEMA">CJ SISTEMA</option>
-                <option value="CLAUDIO MUÑOZ">CLAUDIO MUÑOZ</option>
-                <option value="DANSEG">DANSEG</option>
-                <option value="DONNAIRE">DONNAIRE</option>
-                <option value="ECOCAPACITA">ECOCAPACITA</option>
-                <option value="ELEMONT">ELEMONT</option>
-                <option value="EMMEG">EMMEG</option>
-                <option value="ENTRE RADIOS">ENTRE RADIOS</option>
-                <option value="FERREL">FERREL</option>
-                <option value="HAKEN">HAKEN</option>
-                <option value="INGERACK">INGERACK</option>
-                <option value="KRAF TEA">KRAF TEA</option>
-                <option value="LUREYE">LUREYE</option>
-                <option value="MAGNA IV">MAGNA IV</option>
-                <option value="PC PARTNERS">PC PARTNERS</option>
-                <option value="RENE LOPEZ">RENE LOPEZ</option>
-                <option value="RENTAS EL RETIRO">RENTAS EL RETIRO</option>
-                <option value="SERVELEV">SERVELEV</option>
-                <option value="SIS SEGURIDAD">SIS SEGURIDAD</option>
-                <option value="TEK">TEK</option>
-                <option value="TEKNICALL">TEKNICALL</option>
-                <option value="THUNDER">THUNDER</option>
-                <option value="TIRREAU">TIRREAU</option>
-                <option value="TRIPLEZETA">TRIPLEZETA</option>
-                <option value="OTRO">OTRO / NUEVO</option>
-                <option value="OTRO">OTRO / NUEVO</option>
-            </select>
- 
-            <label>Equipo / Maquinaria</label>
-            <input type="text" id="equipo" placeholder="Ej: Ascensor Central" required>
- 
-            <label>Personal Técnico</label>
-            <div id="listaTecnicos">
-                <div class="tecnico-row">
-                    <span class="tecnico-titulo">Técnico 1 (Líder)</span>
-                    <input type="text" placeholder="Nombre completo" class="t-nombre" required>
-                    <input type="text" placeholder="RUT" class="t-rut" style="margin-top:8px" required>
-                </div>
-            </div>
-            <button type="button" class="btn-add" onclick="addTecnico()">+ AGREGAR OTRO TÉCNICO</button>
- 
-            <div id="evaluacionBloque"></div>
- 
-            <label>Comentarios</label>
-            <textarea id="comentarios" rows="3" placeholder="Observaciones adicionales..."></textarea>
- 
-            <label>Firma (Nombre)</label>
-            <input type="text" id="firma" placeholder="Quien evalúa" required>
- 
-            <button type="submit" class="btn-submit" id="submitBtn">ENVIAR A EXCEL</button>
-        </form>
-    </div>
-</div>
- 
-<script>
-    // Registro del Service Worker para PWA
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-            navigator.serviceWorker.register('./sw.js').catch(err => console.log("SW error", err));
-        });
-    }
- 
-    // URL de tu Script de Google (Recuerda completarla con tu ID real)
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzce3GUa0X7wTV2J3f_4daPeTShqVZukE5o3ADeqUq2TWOKlAFFdXJ1qacn/exec";
- 
-    // Establecer fecha de hoy por defecto
-    document.getElementById('fecha').valueAsDate = new Date();
- 
-    const preguntas = [
-        { id: 'p1', texto: 'P1: Puntualidad' },
-        { id: 'p2', texto: 'P2: EPP completos' },
-        { id: 'p3', texto: 'P3: Disposición' },
-        { id: 'p4', texto: 'P4: Zona limpia' },
-        { id: 'p5', texto: 'P5: Informe/Certificado' },
-        { id: 'p6', texto: 'P6: Calidad servicio' }
-    ];
- 
-    const notas = {};
-    const container = document.getElementById('evaluacionBloque');
- 
-    // Generar botones de evaluación 1 al 7
-    preguntas.forEach((preg) => {
-        const lbl = document.createElement('label');
-        lbl.innerText = preg.texto;
-        container.appendChild(lbl);
- 
-        const group = document.createElement('div');
-        group.className = 'eval-container';
- 
-        for(let i=1; i<=7; i++) {
-            const b = document.createElement('div');
-            b.className = 'eval-btn';
-            b.innerText = i;
-            b.onclick = () => {
-                Array.from(group.children).forEach(x => x.classList.remove('selected'));
-                b.classList.add('selected');
-                notas[preg.id] = i;
-            };
-            group.appendChild(b);
-        }
-        container.appendChild(group);
-    });
 
-    // Contador dinámico para los técnicos
-    let tecnicoCount = 1;
- 
-    function addTecnico() {
-        tecnicoCount++;
-        const d = document.createElement('div');
-        d.className = 'tecnico-row';
-        d.innerHTML = `
-            <span class="tecnico-titulo">Técnico ${tecnicoCount}</span>
-            <input type="text" placeholder="Nombre completo" class="t-nombre" required>
-            <input type="text" placeholder="RUT" class="t-rut" style="margin-top:8px" required>
-        `;
-        document.getElementById('listaTecnicos').appendChild(d);
+<div class="topbar">
+  <div class="topbar-row">
+    <div class="topbar-icon">A</div>
+    <div>
+      <div class="topbar-title">Evaluación Access</div>
+      <div class="topbar-sub">Control de mantención en terreno</div>
+    </div>
+  </div>
+  <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+</div>
+
+<div class="container">
+  <div class="card">
+    <form id="mainForm" novalidate>
+
+      <div class="section-title">Datos generales</div>
+      <label>Fecha<span class="req">*</span></label>
+      <input type="date" id="fecha" required>
+
+      <label>Proveedor<span class="req">*</span></label>
+      <select id="proveedor" required>
+        <option value="">Seleccione...</option>
+        <option value="ALEJANDRO LABRA">ALEJANDRO LABRA</option>
+        <option value="ARIRIMAQ">ARIRIMAQ</option>
+        <option value="BASH">BASH</option>
+        <option value="BOMBEROS">BOMBEROS</option>
+        <option value="BOSQUE ALTO JARDINES">BOSQUE ALTO JARDINES</option>
+        <option value="CASTILLO Y CARRANZA">CASTILLO Y CARRANZA</option>
+        <option value="CHILEMPACK">CHILEMPACK</option>
+        <option value="CIVIL WORKS">CIVIL WORKS</option>
+        <option value="CJ SISTEMA">CJ SISTEMA</option>
+        <option value="CLAUDIO MUÑOZ">CLAUDIO MUÑOZ</option>
+        <option value="DANSEG">DANSEG</option>
+        <option value="DONNAIRE">DONNAIRE</option>
+        <option value="ECOCAPACITA">ECOCAPACITA</option>
+        <option value="ELEMONT">ELEMONT</option>
+        <option value="EMMEG">EMMEG</option>
+        <option value="ENTRE RADIOS">ENTRE RADIOS</option>
+        <option value="FERREL">FERREL</option>
+        <option value="HAKEN">HAKEN</option>
+        <option value="INGERACK">INGERACK</option>
+        <option value="KRAF TEA">KRAF TEA</option>
+        <option value="LUREYE">LUREYE</option>
+        <option value="MAGNA IV">MAGNA IV</option>
+        <option value="PC PARTNERS">PC PARTNERS</option>
+        <option value="RENE LOPEZ">RENE LOPEZ</option>
+        <option value="RENTAS EL RETIRO">RENTAS EL RETIRO</option>
+        <option value="SERVELEV">SERVELEV</option>
+        <option value="SIS SEGURIDAD">SIS SEGURIDAD</option>
+        <option value="TEK">TEK</option>
+        <option value="TEKNICALL">TEKNICALL</option>
+        <option value="THUNDER">THUNDER</option>
+        <option value="TIRREAU">TIRREAU</option>
+        <option value="TRIPLEZETA">TRIPLEZETA</option>
+        <option value="OTRO">OTRO / NUEVO</option>
+      </select>
+      <div class="otro-proveedor" id="otroProveedorWrap">
+        <input type="text" id="otroProveedor" placeholder="Nombre del nuevo proveedor">
+      </div>
+
+      <label>Equipo / Maquinaria<span class="req">*</span></label>
+      <input type="text" id="equipo" placeholder="Ej: Ascensor Central" required>
+
+      <div class="section-title">Personal técnico</div>
+      <div id="listaTecnicos">
+        <div class="tecnico-row" data-idx="1">
+          <div class="tecnico-head">
+            <span class="tecnico-titulo">Técnico 1 (Líder)</span>
+          </div>
+          <input type="text" placeholder="Nombre completo" class="t-nombre" required>
+          <input type="text" placeholder="RUT (ej: 12.345.678-9)" class="t-rut" style="margin-top:8px" required>
+        </div>
+      </div>
+      <button type="button" class="btn-add" id="btnAddTecnico">+ Agregar otro técnico</button>
+
+      <div class="section-title">Evaluación</div>
+      <div id="evaluacionBloque"></div>
+
+      <div class="section-title">Observaciones</div>
+      <label>Comentarios</label>
+      <textarea id="comentarios" rows="3" placeholder="Observaciones adicionales..."></textarea>
+
+      <label>Firma (Nombre)<span class="req">*</span></label>
+      <input type="text" id="firma" placeholder="Quien evalúa" required>
+
+      <div class="error-text" id="formError"></div>
+    </form>
+  </div>
+</div>
+
+<div class="btn-submit-wrap">
+  <button type="submit" form="mainForm" class="btn-submit" id="submitBtn">Enviar evaluación</button>
+</div>
+
+<div class="overlay" id="successOverlay">
+  <div class="check-circle">
+    <svg width="34" height="34" viewBox="0 0 24 24" fill="none"><path d="M4 12.5L9.5 18L20 6" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  </div>
+  <h3>Evaluación enviada</h3>
+  <p>Los datos se registraron correctamente en la planilla.</p>
+  <button id="btnNuevaEval">Nueva evaluación</button>
+</div>
+
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js').catch(err => console.log("SW error", err));
+    });
+  }
+
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzce3GUa0X7wTV2J3f_4daPeTShqVZukE5o3ADeqUq2TWOKlAFFdXJ1qacn/exec";
+
+  document.getElementById('fecha').valueAsDate = new Date();
+
+  // --- Proveedor "otro" ---
+  const selProveedor = document.getElementById('proveedor');
+  const otroWrap = document.getElementById('otroProveedorWrap');
+  const otroInput = document.getElementById('otroProveedor');
+  selProveedor.addEventListener('change', () => {
+    const isOtro = selProveedor.value === 'OTRO';
+    otroWrap.classList.toggle('show', isOtro);
+    otroInput.required = isOtro;
+    if (!isOtro) otroInput.value = '';
+  });
+
+  // --- Preguntas de evaluación ---
+  const preguntas = [
+    { id: 'p1', texto: 'P1: Puntualidad' },
+    { id: 'p2', texto: 'P2: EPP completos' },
+    { id: 'p3', texto: 'P3: Disposición' },
+    { id: 'p4', texto: 'P4: Zona limpia' },
+    { id: 'p5', texto: 'P5: Informe/Certificado' },
+    { id: 'p6', texto: 'P6: Calidad servicio' }
+  ];
+  const notas = {};
+  const evalContainer = document.getElementById('evaluacionBloque');
+
+  function colorForScore(i) {
+    if (i <= 2) return getComputedStyle(document.documentElement).getPropertyValue('--danger');
+    if (i <= 4) return getComputedStyle(document.documentElement).getPropertyValue('--warn');
+    return getComputedStyle(document.documentElement).getPropertyValue('--good');
+  }
+
+  preguntas.forEach((preg) => {
+    const block = document.createElement('div');
+    block.className = 'pregunta-block';
+
+    const head = document.createElement('div');
+    head.className = 'pregunta-texto';
+    head.innerHTML = `<span>${preg.texto}</span><span class="pregunta-nota" id="nota-${preg.id}">Sin calificar</span>`;
+    block.appendChild(head);
+
+    const group = document.createElement('div');
+    group.className = 'eval-container';
+
+    for (let i = 1; i <= 7; i++) {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'eval-btn';
+      b.innerText = i;
+      b.setAttribute('aria-pressed', 'false');
+      b.onclick = () => {
+        Array.from(group.children).forEach(x => { x.classList.remove('selected'); x.style.background=''; x.setAttribute('aria-pressed','false'); });
+        b.classList.add('selected');
+        b.style.background = colorForScore(i);
+        b.setAttribute('aria-pressed', 'true');
+        notas[preg.id] = i;
+        document.getElementById(`nota-${preg.id}`).innerText = `${i} / 7`;
+        updateProgress();
+      };
+      group.appendChild(b);
     }
- 
-    document.getElementById('mainForm').onsubmit = async (e) => {
-        e.preventDefault();
- 
-        // Validar que todas las preguntas tengan nota
-        if(Object.keys(notas).length < 6) {
-            return alert("Por favor, califica todos los puntos del 1 al 7.");
-        }
- 
-        const btn = document.getElementById('submitBtn');
-        btn.disabled = true;
-        btn.innerText = "ENVIANDO...";
- 
-        const payload = {
-            fecha: document.getElementById('fecha').value,
-            proveedor: document.getElementById('proveedor').value,
-            nombres: Array.from(document.querySelectorAll('.t-nombre')).map(i => i.value).join(" / "),
-            nombres: Array.from(document.querySelectorAll('.t-nombre')).map(i => i.value).join(" / "),
-            equipo: document.getElementById('equipo').value,
-            p1: notas.p1,
-            p2: notas.p2,
-            p3: notas.p3,
-            p4: notas.p4,
-            p5: notas.p5,
-            p6: notas.p6,
-            comentarios: document.getElementById('comentarios').value,
-            firma: document.getElementById('firma').value
-        };
- 
-        try {
-            await fetch(SCRIPT_URL, {
-                method: 'POST',
-                mode: 'no-cors', 
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
- 
-            alert("✅ Evaluación enviada con éxito.");
-            location.reload();
- 
-        } catch (err) {
-            console.error(err);
-            alert("Ocurrió un error al enviar los datos.");
-            btn.disabled = false;
-            btn.innerText = "ENVIAR A EXCEL";
-        }
+    block.appendChild(group);
+
+    const scale = document.createElement('div');
+    scale.className = 'eval-scale';
+    scale.innerHTML = '<span>Deficiente</span><span>Excelente</span>';
+    block.appendChild(scale);
+
+    evalContainer.appendChild(block);
+  });
+
+  // --- Técnicos dinámicos ---
+  let tecnicoCount = 1;
+  const listaTecnicos = document.getElementById('listaTecnicos');
+
+  function addTecnico() {
+    tecnicoCount++;
+    const d = document.createElement('div');
+    d.className = 'tecnico-row';
+    d.dataset.idx = tecnicoCount;
+    d.innerHTML = `
+      <div class="tecnico-head">
+        <span class="tecnico-titulo">Técnico ${tecnicoCount}</span>
+        <button type="button" class="btn-remove">Quitar</button>
+      </div>
+      <input type="text" placeholder="Nombre completo" class="t-nombre" required>
+      <input type="text" placeholder="RUT (ej: 12.345.678-9)" class="t-rut" style="margin-top:8px" required>
+    `;
+    d.querySelector('.btn-remove').onclick = () => {
+      d.remove();
+      renumberTecnicos();
+      updateProgress();
     };
+    listaTecnicos.appendChild(d);
+    updateProgress();
+  }
+  document.getElementById('btnAddTecnico').addEventListener('click', addTecnico);
+
+  function renumberTecnicos() {
+    const rows = Array.from(listaTecnicos.querySelectorAll('.tecnico-row'));
+    rows.forEach((row, i) => {
+      const titulo = row.querySelector('.tecnico-titulo');
+      titulo.innerText = i === 0 ? 'Técnico 1 (Líder)' : `Técnico ${i + 1}`;
+    });
+    tecnicoCount = rows.length;
+  }
+
+  // --- Barra de progreso ---
+  const progressFill = document.getElementById('progressFill');
+  function updateProgress() {
+    let total = 0, done = 0;
+
+    total++; if (document.getElementById('fecha').value) done++;
+    total++; if (selProveedor.value && (selProveedor.value !== 'OTRO' || otroInput.value.trim())) done++;
+    total++; if (document.getElementById('equipo').value.trim()) done++;
+    total++; if (document.getElementById('firma').value.trim()) done++;
+
+    const nombres = Array.from(document.querySelectorAll('.t-nombre'));
+    const ruts = Array.from(document.querySelectorAll('.t-rut'));
+    total += nombres.length;
+    nombres.forEach(n => { if (n.value.trim()) done++; });
+    total += ruts.length;
+    ruts.forEach(r => { if (r.value.trim()) done++; });
+
+    total += preguntas.length;
+    done += Object.keys(notas).length;
+
+    const pct = total ? Math.round((done / total) * 100) : 0;
+    progressFill.style.width = pct + '%';
+  }
+  document.getElementById('mainForm').addEventListener('input', updateProgress);
+  updateProgress();
+
+  // --- Envío ---
+  const formError = document.getElementById('formError');
+
+  function mostrarError(msg) {
+    formError.innerText = msg;
+    formError.classList.add('show');
+  }
+  function ocultarError() {
+    formError.classList.remove('show');
+  }
+
+  document.getElementById('mainForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    ocultarError();
+
+    const form = e.target;
+    if (!form.reportValidity()) return;
+
+    if (Object.keys(notas).length < preguntas.length) {
+      return mostrarError('Por favor, califica todos los puntos del 1 al 7.');
+    }
+
+    const nombresVals = Array.from(document.querySelectorAll('.t-nombre')).map(i => i.value.trim());
+    const rutsVals = Array.from(document.querySelectorAll('.t-rut')).map(i => i.value.trim());
+    if (nombresVals.some(v => !v) || rutsVals.some(v => !v)) {
+      return mostrarError('Completa nombre y RUT de todos los técnicos.');
+    }
+
+    const proveedorFinal = selProveedor.value === 'OTRO'
+      ? otroInput.value.trim()
+      : selProveedor.value;
+
+    const btn = document.getElementById('submitBtn');
+    btn.disabled = true;
+    btn.innerText = 'Enviando...';
+
+    const payload = {
+      fecha: document.getElementById('fecha').value,
+      proveedor: proveedorFinal,
+      nombres: nombresVals.join(' / '),
+      ruts: rutsVals.join(' / '),
+      equipo: document.getElementById('equipo').value.trim(),
+      p1: notas.p1, p2: notas.p2, p3: notas.p3,
+      p4: notas.p4, p5: notas.p5, p6: notas.p6,
+      comentarios: document.getElementById('comentarios').value.trim(),
+      firma: document.getElementById('firma').value.trim()
+    };
+
+    try {
+      await fetch(SCRIPT_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      document.getElementById('successOverlay').classList.add('show');
+    } catch (err) {
+      console.error(err);
+      mostrarError('Ocurrió un error al enviar los datos. Intenta nuevamente.');
+      btn.disabled = false;
+      btn.innerText = 'Enviar evaluación';
+    }
+  });
+
+  document.getElementById('btnNuevaEval').addEventListener('click', () => location.reload());
 </script>
 </body>
 </html>
