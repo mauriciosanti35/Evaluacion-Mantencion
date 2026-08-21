@@ -4,8 +4,8 @@
   "description": "Sistema de registro de evaluaciones para proveedores de mantenimiento.",
   "start_url": "index.html",
   "display": "standalone",
-  "background_color": "#f8fafc",
-  "theme_color": "#1e40af",
+  "background_color": "#eef1f6",
+  "theme_color": "#0b2545",
   "orientation": "portrait",
   "icons": [
     {
