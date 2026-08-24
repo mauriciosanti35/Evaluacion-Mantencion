@@ -9,6 +9,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
   :root{
     --bg:#eef1f6;
@@ -105,7 +106,7 @@
     box-shadow:0 0 0 3px rgba(20,57,107,0.12);
     background:#fff;
   }
-  input#fecha, input.t-rut{
+  input#fecha{
     font-family:'JetBrains Mono',monospace; font-size:0.95rem;
   }
   textarea{resize:vertical; min-height:70px;}
@@ -279,7 +280,6 @@
             <span class="tecnico-titulo">Técnico 1 (Líder)</span>
           </div>
           <input type="text" placeholder="Nombre completo" class="t-nombre" required>
-          <input type="text" placeholder="RUT (ej: 12.345.678-9)" class="t-rut" style="margin-top:8px" required>
         </div>
       </div>
       <button type="button" class="btn-add" id="btnAddTecnico">+ Agregar otro técnico</button>
@@ -308,7 +308,8 @@
     <svg width="34" height="34" viewBox="0 0 24 24" fill="none"><path d="M4 12.5L9.5 18L20 6" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
   </div>
   <h3>Evaluación enviada</h3>
-  <p>Los datos se registraron correctamente en la planilla.</p>
+  <p id="overlayMsg">Los datos se registraron y se descargó un PDF de respaldo.</p>
+  <button id="btnDescargarPDF" style="margin-bottom:10px;">Descargar PDF de nuevo</button>
   <button id="btnNuevaEval">Nueva evaluación</button>
 </div>
 
@@ -406,7 +407,6 @@
         <button type="button" class="btn-remove">Quitar</button>
       </div>
       <input type="text" placeholder="Nombre completo" class="t-nombre" required>
-      <input type="text" placeholder="RUT (ej: 12.345.678-9)" class="t-rut" style="margin-top:8px" required>
     `;
     d.querySelector('.btn-remove').onclick = () => {
       d.remove();
@@ -438,11 +438,8 @@
     total++; if (document.getElementById('firma').value.trim()) done++;
 
     const nombres = Array.from(document.querySelectorAll('.t-nombre'));
-    const ruts = Array.from(document.querySelectorAll('.t-rut'));
     total += nombres.length;
     nombres.forEach(n => { if (n.value.trim()) done++; });
-    total += ruts.length;
-    ruts.forEach(r => { if (r.value.trim()) done++; });
 
     total += preguntas.length;
     done += Object.keys(notas).length;
@@ -452,6 +449,109 @@
   }
   document.getElementById('mainForm').addEventListener('input', updateProgress);
   updateProgress();
+
+  // --- Generación de PDF ---
+  const preguntaLabels = {
+    p1: 'Puntualidad', p2: 'EPP completos', p3: 'Disposición',
+    p4: 'Zona limpia', p5: 'Informe/Certificado', p6: 'Calidad servicio'
+  };
+
+  let lastPayload = null;
+
+  function generarPDF(payload) {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    const marginX = 15;
+    let y = 20;
+
+    doc.setFillColor(11, 37, 69);
+    doc.rect(0, 0, 210, 30, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(16);
+    doc.text('Evaluación Access', marginX, 18);
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    doc.text('Control de mantención en terreno', marginX, 24);
+
+    y = 42;
+    doc.setTextColor(15, 23, 42);
+
+    function campo(label, valor) {
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(10);
+      doc.text(label, marginX, y);
+      doc.setFont('helvetica', 'normal');
+      doc.text(String(valor || '-'), marginX + 42, y);
+      y += 7;
+    }
+
+    campo('Fecha:', payload.fecha);
+    campo('Proveedor:', payload.proveedor);
+    campo('Equipo/Máquina:', payload.equipo);
+    campo('Técnicos:', payload.nombres);
+
+    y += 4;
+    doc.setDrawColor(219, 225, 234);
+    doc.line(marginX, y, 195, y);
+    y += 9;
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(11);
+    doc.text('Evaluación', marginX, y);
+    y += 8;
+
+    Object.keys(preguntaLabels).forEach((key) => {
+      const nota = payload[key];
+      let color = [22, 163, 74];
+      if (nota <= 2) color = [220, 38, 38];
+      else if (nota <= 4) color = [245, 158, 11];
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(10);
+      doc.setTextColor(15, 23, 42);
+      doc.text(preguntaLabels[key], marginX, y);
+
+      doc.setFillColor(...color);
+      doc.roundedRect(160, y - 5, 20, 7, 1.5, 1.5, 'F');
+      doc.setTextColor(255, 255, 255);
+      doc.setFont('helvetica', 'bold');
+      doc.text(`${nota} / 7`, 163, y);
+      doc.setTextColor(15, 23, 42);
+      y += 9;
+    });
+
+    y += 4;
+    doc.setDrawColor(219, 225, 234);
+    doc.line(marginX, y, 195, y);
+    y += 9;
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(11);
+    doc.text('Comentarios', marginX, y);
+    y += 7;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    const comentariosLines = doc.splitTextToSize(payload.comentarios || 'Sin comentarios.', 180);
+    doc.text(comentariosLines, marginX, y);
+    y += comentariosLines.length * 6 + 10;
+
+    doc.setFont('helvetica', 'bold');
+    doc.text('Firma:', marginX, y);
+    doc.setFont('helvetica', 'normal');
+    doc.text(payload.firma || '-', marginX + 42, y);
+
+    doc.setFontSize(8);
+    doc.setTextColor(148, 163, 184);
+    doc.text(`Generado el ${new Date().toLocaleString('es-CL')}`, marginX, 287);
+
+    const nombreArchivo = `Evaluacion_${(payload.proveedor || 'proveedor').replace(/\s+/g,'_')}_${payload.fecha}.pdf`;
+    doc.save(nombreArchivo);
+  }
+
+  document.getElementById('btnDescargarPDF').addEventListener('click', () => {
+    if (lastPayload) generarPDF(lastPayload);
+  });
 
   // --- Envío ---
   const formError = document.getElementById('formError');
@@ -476,9 +576,8 @@
     }
 
     const nombresVals = Array.from(document.querySelectorAll('.t-nombre')).map(i => i.value.trim());
-    const rutsVals = Array.from(document.querySelectorAll('.t-rut')).map(i => i.value.trim());
-    if (nombresVals.some(v => !v) || rutsVals.some(v => !v)) {
-      return mostrarError('Completa nombre y RUT de todos los técnicos.');
+    if (nombresVals.some(v => !v)) {
+      return mostrarError('Completa el nombre de todos los técnicos.');
     }
 
     const proveedorFinal = selProveedor.value === 'OTRO'
@@ -493,7 +592,6 @@
       fecha: document.getElementById('fecha').value,
       proveedor: proveedorFinal,
       nombres: nombresVals.join(' / '),
-      ruts: rutsVals.join(' / '),
       equipo: document.getElementById('equipo').value.trim(),
       p1: notas.p1, p2: notas.p2, p3: notas.p3,
       p4: notas.p4, p5: notas.p5, p6: notas.p6,
@@ -501,6 +599,9 @@
       firma: document.getElementById('firma').value.trim()
     };
 
+    lastPayload = payload;
+
+    let envioOk = true;
     try {
       await fetch(SCRIPT_URL, {
         method: 'POST',
@@ -508,13 +609,23 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
-      document.getElementById('successOverlay').classList.add('show');
     } catch (err) {
       console.error(err);
-      mostrarError('Ocurrió un error al enviar los datos. Intenta nuevamente.');
-      btn.disabled = false;
-      btn.innerText = 'Enviar evaluación';
+      envioOk = false;
     }
+
+    try {
+      generarPDF(payload);
+    } catch (err) {
+      console.error('Error generando PDF', err);
+    }
+
+    const overlayMsg = document.getElementById('overlayMsg');
+    overlayMsg.innerText = envioOk
+      ? 'Se generó un PDF de respaldo. Revisa la planilla compartida para confirmar que también llegó ahí.'
+      : 'No se pudo confirmar el envío a la planilla, pero se descargó el PDF de respaldo. Envíalo por WhatsApp/correo a tu jefatura.';
+
+    document.getElementById('successOverlay').classList.add('show');
   });
 
   document.getElementById('btnNuevaEval').addEventListener('click', () => location.reload());
