@@ -9,7 +9,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
 <style>
   :root{
     --bg:#eef1f6;
@@ -459,6 +459,9 @@
   let lastPayload = null;
 
   function generarPDF(payload) {
+    if (!window.jspdf || !window.jspdf.jsPDF) {
+      throw new Error('jsPDF no está disponible (sin conexión al cargar la página).');
+    }
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
     const marginX = 15;
@@ -601,6 +604,16 @@
 
     lastPayload = payload;
 
+    // Generamos el PDF PRIMERO (antes de cualquier await) para no perder
+    // el permiso de descarga del navegador en móviles (Safari/iOS sobre todo).
+    let pdfOk = true;
+    try {
+      generarPDF(payload);
+    } catch (err) {
+      console.error('Error generando PDF', err);
+      pdfOk = false;
+    }
+
     let envioOk = true;
     try {
       await fetch(SCRIPT_URL, {
@@ -614,16 +627,14 @@
       envioOk = false;
     }
 
-    try {
-      generarPDF(payload);
-    } catch (err) {
-      console.error('Error generando PDF', err);
-    }
-
     const overlayMsg = document.getElementById('overlayMsg');
-    overlayMsg.innerText = envioOk
-      ? 'Se generó un PDF de respaldo. Revisa la planilla compartida para confirmar que también llegó ahí.'
-      : 'No se pudo confirmar el envío a la planilla, pero se descargó el PDF de respaldo. Envíalo por WhatsApp/correo a tu jefatura.';
+    if (!pdfOk) {
+      overlayMsg.innerText = 'No se pudo generar el PDF automáticamente. Usa el botón de abajo para intentarlo de nuevo.';
+    } else {
+      overlayMsg.innerText = envioOk
+        ? 'Se descargó un PDF de respaldo. Revisa la planilla compartida para confirmar que también llegó ahí.'
+        : 'No se pudo confirmar el envío a la planilla, pero se descargó el PDF de respaldo. Envíalo por WhatsApp/correo a tu jefatura.';
+    }
 
     document.getElementById('successOverlay').classList.add('show');
   });
