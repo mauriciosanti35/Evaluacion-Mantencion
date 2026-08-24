@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
 
-<!-- Library jsPDF -->
+<!-- Carga síncrona y directa de jsPDF para PC y Móviles -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <style>
@@ -197,10 +197,19 @@
   @keyframes pop{from{transform:scale(0.6); opacity:0;} to{transform:scale(1); opacity:1;}}
   .overlay h3{font-family:'Space Grotesk',sans-serif; margin:0 0 6px; font-size:1.2rem;}
   .overlay p{color:#c7d2e3; font-size:0.9rem; margin:0 0 22px;}
-  .overlay button{
+  
+  .modal-actions{
+    display:flex; flex-direction:column; gap:10px; width:100%; max-width:300px;
+  }
+  .btn-action-main{
     background:var(--amber); color:var(--navy-900); border:none;
-    padding:13px 22px; border-radius:10px; font-weight:700; cursor:pointer;
-    font-family:'Space Grotesk',sans-serif; margin: 4px 0;
+    padding:14px; border-radius:10px; font-weight:700; cursor:pointer;
+    font-family:'Space Grotesk',sans-serif; font-size:0.95rem; text-align:center; text-decoration:none;
+  }
+  .btn-action-sec{
+    background:transparent; color:#fff; border:1px solid rgba(255,255,255,0.3);
+    padding:12px; border-radius:10px; font-weight:600; cursor:pointer;
+    font-family:'Space Grotesk',sans-serif; font-size:0.88rem;
   }
 
   .error-text{
@@ -309,9 +318,12 @@
     <svg width="34" height="34" viewBox="0 0 24 24" fill="none"><path d="M4 12.5L9.5 18L20 6" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
   </div>
   <h3>Evaluación enviada</h3>
-  <p id="overlayMsg">Los datos se registraron y se descargó un PDF de respaldo.</p>
-  <button id="btnDescargarPDF">Descargar PDF de nuevo</button>
-  <button id="btnNuevaEval" style="background:#fff; color:var(--navy-900);">Nueva evaluación</button>
+  <p id="overlayMsg">Los datos fueron registrados exitosamente.</p>
+  
+  <div class="modal-actions">
+    <button class="btn-action-main" id="btnDescargarPDF">📄 Descargar / Imprimir PDF</button>
+    <button class="btn-action-sec" id="btnNuevaEval">Nueva evaluación</button>
+  </div>
 </div>
 
 <script>
@@ -451,7 +463,7 @@
   document.getElementById('mainForm').addEventListener('input', updateProgress);
   updateProgress();
 
-  // --- Generación de PDF Adaptada para PWA y Móviles ---
+  // --- Generación Universal de PDF (PC + Móvil) ---
   const preguntaLabels = {
     p1: 'P1: Puntualidad', p2: 'P2: EPP completos', p3: 'P3: Disposición',
     p4: 'P4: Zona limpia', p5: 'P5: Informe/Certificado', p6: 'P6: Calidad servicio'
@@ -459,16 +471,16 @@
 
   let lastPayload = null;
 
-  function generarPDF(payload) {
+  function construirObjetoPDF(payload) {
     if (!window.jspdf || !window.jspdf.jsPDF) {
-      throw new Error('jsPDF no se ha cargado correctamente.');
+      throw new Error('jsPDF no se ha cargado.');
     }
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
     const marginX = 15;
     let y = 20;
 
-    // Cabecera principal
+    // Encabezado
     doc.setFillColor(11, 37, 69);
     doc.rect(0, 0, 210, 30, 'F');
     doc.setTextColor(255, 255, 255);
@@ -550,28 +562,49 @@
     doc.setTextColor(148, 163, 184);
     doc.text(`Generado el ${new Date().toLocaleString('es-CL')}`, marginX, 287);
 
-    const nombreArchivo = `Evaluacion_${(payload.proveedor || 'proveedor').replace(/\s+/g,'_')}_${payload.fecha}.pdf`;
+    return doc;
+  }
 
-    // Metodo seguro de descarga para móviles/PWAs
+  function procesarYDescargarPDF(payload) {
     try {
-      doc.save(nombreArchivo);
-    } catch (e) {
-      const blob = doc.output('blob');
-      const blobUrl = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = blobUrl;
-      a.download = nombreArchivo;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
+      const doc = construirObjetoPDF(payload);
+      const nombreArchivo = `Evaluacion_${(payload.proveedor || 'proveedor').replace(/\s+/g,'_')}_${payload.fecha}.pdf`;
+
+      // Detectar si es dispositivo móvil o PC
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+      if (isMobile) {
+        // En móviles, forzamos la descarga o blob URL directa
+        const blob = doc.output('blob');
+        const blobUrl = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = blobUrl;
+        a.download = nombreArchivo;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      } else {
+        // En PC descarga directa + compatibilidad para abrir pestaña limpia
+        doc.save(nombreArchivo);
+      }
+      return true;
+    } catch (err) {
+      console.error('Error generando PDF:', err);
+      return false;
     }
   }
 
+  // Evento botón imprimir/descargar manual del modal
   document.getElementById('btnDescargarPDF').addEventListener('click', () => {
-    if (lastPayload) generarPDF(lastPayload);
+    if (lastPayload) {
+      const doc = construirObjetoPDF(lastPayload);
+      const blob = doc.output('bloburl');
+      // Abrir en nueva ventana en PC permite imprimir inmediatamente con Ctrl+P
+      window.open(blob, '_blank');
+    }
   });
 
-  // --- Envío ---
+  // --- Envío del Formulario ---
   const formError = document.getElementById('formError');
 
   function mostrarError(msg) {
@@ -619,16 +652,10 @@
 
     lastPayload = payload;
 
-    // Generamos el PDF primero
-    let pdfOk = true;
-    try {
-      generarPDF(payload);
-    } catch (err) {
-      console.error('Error generando PDF:', err);
-      pdfOk = false;
-    }
+    // Intentar disparo automático de PDF
+    const pdfOk = procesarYDescargarPDF(payload);
 
-    let envioOk = true;
+    // Envío asíncrono a Google Apps Script
     try {
       await fetch(SCRIPT_URL, {
         method: 'POST',
@@ -638,18 +665,9 @@
       });
     } catch (err) {
       console.error('Error enviando datos:', err);
-      envioOk = false;
     }
 
-    const overlayMsg = document.getElementById('overlayMsg');
-    if (!pdfOk) {
-      overlayMsg.innerText = 'No se pudo generar el PDF automáticamente. Inténtalo de nuevo con el botón de abajo.';
-    } else {
-      overlayMsg.innerText = envioOk
-        ? 'Se registraron los datos y se descargó el PDF de respaldo.'
-        : 'No se confirmó el envío a la planilla, pero se descargó el PDF de respaldo correctamente.';
-    }
-
+    // Mostrar overlay final
     document.getElementById('successOverlay').classList.add('show');
     btn.disabled = false;
     btn.innerText = 'Enviar evaluación';
