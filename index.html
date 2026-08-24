@@ -9,7 +9,10 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
+
+<!-- Library jsPDF -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
 <style>
   :root{
     --bg:#eef1f6;
@@ -139,7 +142,6 @@
   .otro-proveedor{display:none; margin-top:8px;}
   .otro-proveedor.show{display:block;}
 
-  /* Selector de evaluación estilo "gauge" */
   .pregunta-block{margin-top:20px;}
   .pregunta-texto{
     font-weight:600; font-size:0.85rem; color:#334155;
@@ -181,7 +183,6 @@
   }
   .btn-submit:disabled{background:#94a3b8; box-shadow:none;}
 
-  /* Overlay de éxito */
   .overlay{
     position:fixed; inset:0; background:rgba(11,37,69,0.94);
     display:none; align-items:center; justify-content:center;
@@ -199,7 +200,7 @@
   .overlay button{
     background:var(--amber); color:var(--navy-900); border:none;
     padding:13px 22px; border-radius:10px; font-weight:700; cursor:pointer;
-    font-family:'Space Grotesk',sans-serif;
+    font-family:'Space Grotesk',sans-serif; margin: 4px 0;
   }
 
   .error-text{
@@ -309,8 +310,8 @@
   </div>
   <h3>Evaluación enviada</h3>
   <p id="overlayMsg">Los datos se registraron y se descargó un PDF de respaldo.</p>
-  <button id="btnDescargarPDF" style="margin-bottom:10px;">Descargar PDF de nuevo</button>
-  <button id="btnNuevaEval">Nueva evaluación</button>
+  <button id="btnDescargarPDF">Descargar PDF de nuevo</button>
+  <button id="btnNuevaEval" style="background:#fff; color:var(--navy-900);">Nueva evaluación</button>
 </div>
 
 <script>
@@ -348,9 +349,9 @@
   const evalContainer = document.getElementById('evaluacionBloque');
 
   function colorForScore(i) {
-    if (i <= 2) return getComputedStyle(document.documentElement).getPropertyValue('--danger');
-    if (i <= 4) return getComputedStyle(document.documentElement).getPropertyValue('--warn');
-    return getComputedStyle(document.documentElement).getPropertyValue('--good');
+    if (i <= 2) return '#dc2626';
+    if (i <= 4) return '#f59e0b';
+    return '#16a34a';
   }
 
   preguntas.forEach((preg) => {
@@ -450,23 +451,24 @@
   document.getElementById('mainForm').addEventListener('input', updateProgress);
   updateProgress();
 
-  // --- Generación de PDF ---
+  // --- Generación de PDF Adaptada para PWA y Móviles ---
   const preguntaLabels = {
-    p1: 'Puntualidad', p2: 'EPP completos', p3: 'Disposición',
-    p4: 'Zona limpia', p5: 'Informe/Certificado', p6: 'Calidad servicio'
+    p1: 'P1: Puntualidad', p2: 'P2: EPP completos', p3: 'P3: Disposición',
+    p4: 'P4: Zona limpia', p5: 'P5: Informe/Certificado', p6: 'P6: Calidad servicio'
   };
 
   let lastPayload = null;
 
   function generarPDF(payload) {
     if (!window.jspdf || !window.jspdf.jsPDF) {
-      throw new Error('jsPDF no está disponible (sin conexión al cargar la página).');
+      throw new Error('jsPDF no se ha cargado correctamente.');
     }
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
     const marginX = 15;
     let y = 20;
 
+    // Cabecera principal
     doc.setFillColor(11, 37, 69);
     doc.rect(0, 0, 210, 30, 'F');
     doc.setTextColor(255, 255, 255);
@@ -516,10 +518,10 @@
       doc.text(preguntaLabels[key], marginX, y);
 
       doc.setFillColor(...color);
-      doc.roundedRect(160, y - 5, 20, 7, 1.5, 1.5, 'F');
+      doc.roundedRect(160, y - 5, 22, 7, 1.5, 1.5, 'F');
       doc.setTextColor(255, 255, 255);
       doc.setFont('helvetica', 'bold');
-      doc.text(`${nota} / 7`, 163, y);
+      doc.text(`${nota} / 7`, 165, y);
       doc.setTextColor(15, 23, 42);
       y += 9;
     });
@@ -535,7 +537,7 @@
     y += 7;
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(10);
-    const comentariosLines = doc.splitTextToSize(payload.comentarios || 'Sin comentarios.', 180);
+    const comentariosLines = doc.splitTextToSize(payload.comentarios || 'Sin observaciones.', 180);
     doc.text(comentariosLines, marginX, y);
     y += comentariosLines.length * 6 + 10;
 
@@ -549,7 +551,20 @@
     doc.text(`Generado el ${new Date().toLocaleString('es-CL')}`, marginX, 287);
 
     const nombreArchivo = `Evaluacion_${(payload.proveedor || 'proveedor').replace(/\s+/g,'_')}_${payload.fecha}.pdf`;
-    doc.save(nombreArchivo);
+
+    // Metodo seguro de descarga para móviles/PWAs
+    try {
+      doc.save(nombreArchivo);
+    } catch (e) {
+      const blob = doc.output('blob');
+      const blobUrl = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = nombreArchivo;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
   }
 
   document.getElementById('btnDescargarPDF').addEventListener('click', () => {
@@ -604,13 +619,12 @@
 
     lastPayload = payload;
 
-    // Generamos el PDF PRIMERO (antes de cualquier await) para no perder
-    // el permiso de descarga del navegador en móviles (Safari/iOS sobre todo).
+    // Generamos el PDF primero
     let pdfOk = true;
     try {
       generarPDF(payload);
     } catch (err) {
-      console.error('Error generando PDF', err);
+      console.error('Error generando PDF:', err);
       pdfOk = false;
     }
 
@@ -623,20 +637,22 @@
         body: JSON.stringify(payload)
       });
     } catch (err) {
-      console.error(err);
+      console.error('Error enviando datos:', err);
       envioOk = false;
     }
 
     const overlayMsg = document.getElementById('overlayMsg');
     if (!pdfOk) {
-      overlayMsg.innerText = 'No se pudo generar el PDF automáticamente. Usa el botón de abajo para intentarlo de nuevo.';
+      overlayMsg.innerText = 'No se pudo generar el PDF automáticamente. Inténtalo de nuevo con el botón de abajo.';
     } else {
       overlayMsg.innerText = envioOk
-        ? 'Se descargó un PDF de respaldo. Revisa la planilla compartida para confirmar que también llegó ahí.'
-        : 'No se pudo confirmar el envío a la planilla, pero se descargó el PDF de respaldo. Envíalo por WhatsApp/correo a tu jefatura.';
+        ? 'Se registraron los datos y se descargó el PDF de respaldo.'
+        : 'No se confirmó el envío a la planilla, pero se descargó el PDF de respaldo correctamente.';
     }
 
     document.getElementById('successOverlay').classList.add('show');
+    btn.disabled = false;
+    btn.innerText = 'Enviar evaluación';
   });
 
   document.getElementById('btnNuevaEval').addEventListener('click', () => location.reload());
